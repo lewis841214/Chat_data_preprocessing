@@ -1,0 +1,49 @@
+# Default configuration for Chat Data Preprocessing Pipeline
+
+platform:
+  # Type of platform-specific handler
+  # Options: generic, reddit, twitter, discord, custom
+  type: generic
+  input_path: data/input/
+  batch_size: 1000
+
+cleaning:
+  stopwords_enabled: true
+  language_filter_enabled: true
+  url_filter_enabled: true
+  paragraph_filter_enabled: true
+  exact_dedup_enabled: true
+  min_length: 10
+  max_length: 32768
+
+filtering:
+  fasttext_enabled: true
+  fasttext_model_path: models/fasttext/lid.176.bin
+  kenlm_enabled: true
+  kenlm_model_path:
+    en: models/kenlm/en.arpa.bin
+    zh: models/kenlm/zh.arpa.bin
+  gpt_evaluation_enabled: false
+  logistic_regression_enabled: true
+  target_languages:
+    - en
+    - zh
+
+formatting:
+  remove_punctuation: false
+  clean_html: true
+  fix_unicode: true
+
+deduplication:
+  enabled: true
+  # Deduplication method to use
+  # Options: minhash_lsh, simhash, semantic, suffix_array, dbscan, bertopic, bloom_filter
+  method: minhash_lsh
+  threshold: 0.8
+  ngram_size: 5
+  num_permutations: 128
+  band_size: 8
+
+output:
+  path: data/output/corpus.json
+  format: json 
