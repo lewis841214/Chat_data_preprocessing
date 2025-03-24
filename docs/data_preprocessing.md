@@ -132,18 +132,23 @@ This flow chart illustrates the complete preprocessing pipeline, highlighting wh
 
 ### JSON Structure
 Reformulate processed data into pre-defined structure in JSON format:
+
 ```json
+// file.json
 {
+  "platfrom": ,
+  "created_at": timestamp with time zone,
+  "last_message_at": timestamp with time zone,
   "conversation": [
     {
-      "content": "Explain the main differences between an alligator and a crocodile.",
-      "do_train": false,
-      "role": "User"
+      "role": "User",
+      "content": "What is the capital of France?",
+      "do_train": false
     },
     {
-      "content": "Alligators and crocodiles belong to the same order, Crocodilia, but they have several differences. 1) Shape of the snout: Alligators have a U-shaped, wider snout, while crocodiles have a more pointed, V-shaped snout. 2) Teeth placement: In an alligator, lower teeth are mostly hidden when its mouth is closed, while in a crocodile, the fourth lower tooth is visible even when the mouth is closed. 3) Habitat: Alligators are mostly found in freshwater habitats such as swamps and rivers, while crocodiles can be found in both freshwater and saltwater habitats. 4) Distribution: Alligators are mainly found in the southeastern United States and parts of China, whereas crocodiles have a more widespread distribution across Africa, Asia, the Americas, and Australia.",
-      "do_train": true,
-      "role": "Assistant"
+      "role": "Assistant",
+      "content": "The capital of France is Paris.",
+      "do_train": true
     }
   ]
 }

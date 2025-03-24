@@ -1,31 +1,12 @@
-# Core requirements
 pyyaml>=6.0
 numpy>=1.22.0
 scipy>=1.8.0
 tqdm>=4.64.0
-
-# For platform-specific data handlers
 requests>=2.28.0
-praw>=7.6.0  # For Reddit API
-tweepy>=4.10.0  # For Twitter API
-discord.py>=2.0.0  # For Discord data
-
-# For cleaning
 regex>=2022.3.15
 langdetect>=1.0.9
 beautifulsoup4>=4.11.1
 html5lib>=1.1
-ftfy>=6.1.1  # For fixing Unicode issues
-
-# For quality filtering
-fasttext>=0.9.2
-kenlm>=0.1  # Might need to be installed via conda
+ftfy>=6.1.1
 scikit-learn>=1.1.1
-
-# For deduplication
-datasketch>=1.5.1  # For MinHash and LSH
-simhash-py>=0.4.0  # For SimHash
-rapidfuzz>=2.11.1  # For fuzzy matching
-sentence-transformers>=2.2.2  # For semantic deduplication
-bertopic>=0.13.0  # For topic modeling
-pybloom-live>=3.1.0  # For Bloom filters 
+rapidfuzz>=2.11.1 

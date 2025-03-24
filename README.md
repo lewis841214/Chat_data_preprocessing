@@ -129,7 +129,11 @@ python pipeline.py --config configs/my_config.yaml
 The pipeline accepts data in various formats and standardizes them. The most straightforward format is:
 
 ```json
+// file.json
 {
+  "platfrom": ,
+  "created_at": timestamp with time zone,
+  "last_message_at": timestamp with time zone,
   "conversation": [
     {
       "role": "User",
@@ -150,23 +154,24 @@ The pipeline accepts data in various formats and standardizes them. The most str
 The output is a list of standardized conversation objects in JSON format:
 
 ```json
-[
-  {
-    "conversation": [
-      {
-        "role": "User",
-        "content": "Explain the main differences between an alligator and a crocodile.",
-        "do_train": false
-      },
-      {
-        "role": "Assistant",
-        "content": "Alligators and crocodiles belong to the same order, Crocodilia, but they have several differences...",
-        "do_train": true
-      }
-    ]
-  },
-  ...
-]
+// file.json
+{
+  "platfrom": ,
+  "created_at": timestamp with time zone,
+  "last_message_at": timestamp with time zone,
+  "conversation": [
+    {
+      "role": "User",
+      "content": "What is the capital of France?",
+      "do_train": false
+    },
+    {
+      "role": "Assistant",
+      "content": "The capital of France is Paris.",
+      "do_train": true
+    }
+  ]
+}
 ```
 
 ## Extending the Pipeline

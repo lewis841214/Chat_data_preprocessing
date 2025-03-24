@@ -10,6 +10,8 @@ import os
 import argparse
 import logging
 import json
+import yaml  # Added for debugging
+import codecs  # Added for UTF-8 handling
 from typing import Dict, List, Any, Optional
 
 from config_handler import ConfigHandler
@@ -36,8 +38,17 @@ class Pipeline:
         self.config = ConfigHandler(config_path).get_config()
         self.logger.info(f"Initialized pipeline with config from {config_path}")
         
+        # Debug: Print the platform configuration
+        if "platform" in self.config:
+            self.logger.info(f"Platform config: {self.config['platform']}")
+            self.logger.info(f"Platform type: {self.config['platform'].get('type', 'Not specified')}")
+        else:
+            self.logger.warning("No platform section found in config")
+        
         # Initialize components
-        self.platform_handler = PlatformHandlerFactory.get_handler(self.config["platform"])
+        self.platform_handler = PlatformHandlerFactory.get_handler(self.config)
+        self.logger.info(f"Using platform handler: {self.platform_handler.__class__.__name__}")
+        
         self.cleaner = Cleaner(self.config["cleaning"])
         self.filter_manager = FilterManager(self.config["filtering"])
         self.formatter = Formatter(self.config["formatting"])
@@ -49,7 +60,7 @@ class Pipeline:
             level=logging.INFO,
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[
-                logging.FileHandler("pipeline.log"),
+                logging.FileHandler("pipeline.log", encoding='utf-8'),
                 logging.StreamHandler()
             ]
         )
@@ -101,6 +112,7 @@ class Pipeline:
         output_path = self.config["output"]["path"]
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
+        # Use proper UTF-8 encoding when writing the output file
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         
@@ -113,6 +125,13 @@ def main():
     parser = argparse.ArgumentParser(description="Chat Data Preprocessing Pipeline")
     parser.add_argument("--config", "-c", required=True, help="Path to configuration file")
     args = parser.parse_args()
+    
+    # Debug - print the raw config file
+    with codecs.open(args.config, 'r', encoding='utf-8') as f:
+        config_text = f.read()
+        parsed_config = yaml.safe_load(config_text)
+        print(f"Raw config from {args.config}:")
+        print(f"Platform section: {parsed_config.get('platform', 'Not found')}")
     
     pipeline = Pipeline(args.config)
     pipeline.run()

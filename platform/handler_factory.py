@@ -10,6 +10,7 @@ from typing import Dict, Any, Type
 
 from platform.base_handler import BasePlatformHandler
 from platform.generic_handler import GenericHandler
+from platform.facebook_handler import FacebookHandler
 
 
 class PlatformHandlerFactory:
@@ -20,6 +21,7 @@ class PlatformHandlerFactory:
     # Registry of available handlers
     _handlers = {
         "generic": GenericHandler,
+        "facebook": FacebookHandler,
         # Add other handlers as they are implemented
         # "reddit": RedditHandler,
         # "twitter": TwitterHandler,
@@ -44,7 +46,7 @@ class PlatformHandlerFactory:
         Get a platform handler instance based on configuration.
         
         Args:
-            config: Configuration dictionary
+            config: Configuration dictionary that should contain a platform section
             
         Returns:
             Instance of platform handler
@@ -52,12 +54,41 @@ class PlatformHandlerFactory:
         Raises:
             ValueError: If handler type is not supported
         """
-        handler_type = config.get("type", "generic")
+        logger = logging.getLogger(__name__)
         
+        # Extract the platform configuration section
+        if "platform" in config and isinstance(config["platform"], dict):
+            platform_config = config["platform"]
+            logger.info(f"Found platform section in config: {platform_config}")
+        else:
+            logger.warning("No platform section found in config, using empty config")
+            platform_config = {}
+        
+        # Determine the handler type to use
+        handler_type = None
+        
+        # First check for explicit 'type' field
+        if "type" in platform_config and platform_config["type"]:
+            handler_type = platform_config["type"]
+            logger.info(f"Using handler type from 'type' field: {handler_type}")
+        
+        # Then check for platform field 
+        elif "platform" in platform_config and platform_config["platform"]:
+            handler_type = platform_config["platform"]
+            logger.info(f"Using handler type from 'platform' field: {handler_type}")
+        
+        # Fall back to generic if no type specified
+        if not handler_type:
+            logger.warning("No handler type specified, using generic handler")
+            handler_type = "generic"
+        
+        logger.info(f"Selected handler type: {handler_type}")
+        
+        # Check if the handler type is supported
         if handler_type not in cls._handlers:
-            logger = logging.getLogger(__name__)
             logger.warning(f"Unsupported handler type: {handler_type}. Falling back to generic handler.")
             handler_type = "generic"
             
+        # Create and return the handler instance
         handler_class = cls._handlers[handler_type]
-        return handler_class(config) 
+        return handler_class(platform_config) 

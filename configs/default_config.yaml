@@ -3,9 +3,18 @@
 platform:
   # Type of platform-specific handler
   # Options: generic, reddit, twitter, discord, custom
-  type: generic
-  input_path: data/input/
-  batch_size: 1000
+  type: facebook
+  # Platform identifier (used in output data)
+  platform: facebook
+  # Path to Facebook data directory (contains message_1.json files)
+  platform_data_path: data/downloaded_data/messages/inbox/
+  # Path to save formatted output files (preserves original filenames)
+  input_formated_path: data/formated_data/
+  # Path for final processed output
+  output_path: data/output/
+  # Set your Facebook username to correctly identify your messages as "User"
+  # (If not set, will try to identify automatically using heuristics)
+  user_name: "大大力良品鍍膜"
 
 cleaning:
   stopwords_enabled: true
@@ -17,14 +26,14 @@ cleaning:
   max_length: 32768
 
 filtering:
-  fasttext_enabled: true
+  fasttext_enabled: false
   fasttext_model_path: models/fasttext/lid.176.bin
-  kenlm_enabled: true
+  kenlm_enabled: false
   kenlm_model_path:
     en: models/kenlm/en.arpa.bin
     zh: models/kenlm/zh.arpa.bin
   gpt_evaluation_enabled: false
-  logistic_regression_enabled: true
+  logistic_regression_enabled: false
   target_languages:
     - en
     - zh
@@ -45,5 +54,5 @@ deduplication:
   band_size: 8
 
 output:
-  path: data/output/corpus.json
-  format: json 
+  path: data/output/facebook_output.json
+
