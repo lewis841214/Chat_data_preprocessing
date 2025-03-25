@@ -167,6 +167,9 @@ class Pipeline:
             self.logger.error("No data loaded. Pipeline execution failed.")
             return
         
+        if self.config["mode"] == "testing":
+            data = data[:500]
+
         # Step 2: Clean data (remove useless content)
         self.logger.info("Step 2: Cleaning - removing useless content")
         cleaned_data = self.cleaner.process(data)

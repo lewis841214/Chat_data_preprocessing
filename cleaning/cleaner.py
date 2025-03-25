@@ -101,21 +101,10 @@ class Cleaner(BaseProcessor):
                 continue
                 
             conversation = item["conversation"]
-            
-            # Check if any message is too short
-            too_short = False
-            for message in conversation:
-                content = message.get("content", "")
-                if len(content) < self.min_length:
-                    too_short = True
-                    break
-                    
-            if too_short:
-                continue
-                
             # Check total conversation length
             total_length = sum(len(message.get("content", "")) for message in conversation)
             if total_length > self.max_length:
+                breakpoint()
                 continue
                 
             filtered_data.append(item)

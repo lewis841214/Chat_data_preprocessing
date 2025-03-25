@@ -10,6 +10,7 @@ import hashlib
 import random
 from typing import Dict, List, Any, Set, Tuple, Optional, Union, Iterator
 from collections import defaultdict
+from tqdm import tqdm
 
 from deduplication.dedup_base import DeduplicationMethod
 
@@ -62,7 +63,7 @@ class MinHashLSH(DeduplicationMethod):
         
         # Step 1: Generate MinHash signatures for all items
         signatures = {}
-        for idx, item in enumerate(data):
+        for idx, item in tqdm(enumerate(data)):
             text = self._extract_text(item)
             if not text:
                 continue
@@ -193,7 +194,7 @@ class MinHashLSH(DeduplicationMethod):
         
         # Find candidate pairs from buckets
         candidates = set()
-        for band_bucket in buckets:
+        for band_bucket in tqdm(buckets):
             for items in band_bucket.values():
                 if len(items) > 1:
                     # Add all pairs in the same bucket
@@ -235,7 +236,7 @@ class MinHashLSH(DeduplicationMethod):
         # Build graph from similar pairs
         graph = defaultdict(set)
         
-        for idx1, idx2 in candidates:
+        for idx1, idx2 in tqdm(candidates):
             # Compute exact Jaccard similarity
             sim = self._jaccard_similarity(signatures[idx1], signatures[idx2])
             
@@ -288,7 +289,7 @@ class MinHashLSH(DeduplicationMethod):
         """
         representatives = []
         
-        for cluster in clusters:
+        for cluster in tqdm(clusters):
             if len(cluster) == 1:
                 # Singleton cluster
                 representatives.append(data[cluster[0]])

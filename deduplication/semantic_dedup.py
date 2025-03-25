@@ -80,7 +80,7 @@ class SemanticDeduplicate(DeduplicationMethod):
         
         if not texts:
             return data
-            
+        breakpoint()
         # Step 2: Generate embeddings for all texts
         self.logger.info(f"Generating embeddings for {len(texts)} texts")
         embeddings = self.model.encode(texts, batch_size=self.batch_size)

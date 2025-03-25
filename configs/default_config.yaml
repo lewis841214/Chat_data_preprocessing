@@ -1,9 +1,10 @@
 # Default configuration for Chat Data Preprocessing Pipeline
+mode: testing
 
 platform: # optional
   # Type of platform-specific handler
   # Options: generic, reddit, twitter, discord, custom
-  type: facebook # facebook
+  type:  # facebook
   # Platform identifier (used in output data)
   platform: facebook
   # Path to Facebook data directory (contains message_1.json files)
@@ -27,11 +28,11 @@ cleaning:
 
 filtering:
   # Language detection using FastText
-  fasttext_enabled: true
+  fasttext_enabled: false
   fasttext_model_path: models/fasttext/lid.176.bin
   
   # Perplexity scoring using KenLM
-  kenlm_enabled: true
+  kenlm_enabled: false
   kenlm_model_path:
     en: models/kenlm/en.arpa.bin
     zh: models/kenlm/zh.arpa.bin
@@ -77,18 +78,18 @@ formatting:
   
   # Date handling options - choose one approach
   # Option 1: Normalize dates (convert to standard format)
-  normalize_dates: false       # Normalize date formats (like 2/3~28)
+  normalize_dates: true       # Normalize date formats (like 2/3~28)
   date_format: "MM/DD"        # Format to use (MM/DD, MM-DD, or "verbose")
   
   # Option 2: Replace dates with placeholder (takes precedence if both are true)
-  replace_dates: true        # Replace dates with placeholder token
+  replace_dates: false         # Replace dates with placeholder token
   date_replacement: "[DATE]"  # Placeholder for date entities
 
 deduplication:
   enabled: true
   # Deduplication method to use
   # Options: minhash_lsh, simhash, semantic, suffix_array, dbscan, bertopic, bloom_filter
-  method: semantic
+  method: minhash_lsh
   threshold: 0.8
   ngram_size: 5
   num_permutations: 128
