@@ -15,7 +15,7 @@ platform: # optional
   output_path: data/output/
   # Set your Facebook username to correctly identify your messages as "assistant"
   # (If not set, will try to identify automatically using heuristics)
-  user_name: "大大力良品鍍膜"
+  user_name: "you_store_name"
 
 cleaning:
   stopwords_enabled: true
