@@ -7,7 +7,7 @@ Generic platform handler for processing data without platform-specific logic.
 
 from typing import Dict, List, Any, Optional
 
-from platform.base_handler import BasePlatformHandler
+from platform_handlers.base_handler import BasePlatformHandler
 
 
 class GenericHandler(BasePlatformHandler):

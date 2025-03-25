@@ -8,9 +8,9 @@ Factory for creating platform-specific data handlers.
 import logging
 from typing import Dict, Any, Type
 
-from platform.base_handler import BasePlatformHandler
-from platform.generic_handler import GenericHandler
-from platform.facebook_handler import FacebookHandler
+from platform_handlers.base_handler import BasePlatformHandler
+from platform_handlers.generic_handler import GenericHandler
+from platform_handlers.facebook_handler import FacebookHandler
 
 
 class PlatformHandlerFactory:

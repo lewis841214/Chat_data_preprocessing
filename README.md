@@ -110,16 +110,11 @@ pip install -r requirements.txt
 
 ## Usage
 
-1. Create a configuration file (or use the default one):
-```bash
-python config_handler.py --output configs/my_config.yaml
-```
 
-2. Customize the configuration by editing the YAML file.
-
-3. Run the pipeline:
+Run the pipeline:
 ```bash
-python pipeline.py --config configs/my_config.yaml
+source venv/bin/activate
+python pipeline.py --config configs/default_config.yaml
 ```
 
 ## Input/Output Format

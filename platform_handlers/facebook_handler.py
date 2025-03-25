@@ -14,7 +14,7 @@ import re
 from typing import Dict, List, Any, Optional, Tuple
 from tqdm import tqdm
 
-from platform.base_handler import BasePlatformHandler
+from platform_handlers.base_handler import BasePlatformHandler
 
 
 class ChineseTextJSONDecoder(json.JSONDecoder):

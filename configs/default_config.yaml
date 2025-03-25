@@ -1,9 +1,9 @@
 # Default configuration for Chat Data Preprocessing Pipeline
 
-platform:
+platform: # optional
   # Type of platform-specific handler
   # Options: generic, reddit, twitter, discord, custom
-  type: facebook
+  type: facebook # facebook
   # Platform identifier (used in output data)
   platform: facebook
   # Path to Facebook data directory (contains message_1.json files)
@@ -26,33 +26,89 @@ cleaning:
   max_length: 32768
 
 filtering:
-  fasttext_enabled: false
+  # Language detection using FastText
+  fasttext_enabled: true
   fasttext_model_path: models/fasttext/lid.176.bin
-  kenlm_enabled: false
+  
+  # Perplexity scoring using KenLM
+  kenlm_enabled: true
   kenlm_model_path:
     en: models/kenlm/en.arpa.bin
     zh: models/kenlm/zh.arpa.bin
-  gpt_evaluation_enabled: false
+  
+  # Logistic regression quality classifier
   logistic_regression_enabled: false
+  logistic_regression_model_path: models/quality/logistic_regression.pt
+  
+  # Optional GPT-based evaluation (requires API key)
+  gpt_evaluation_enabled: false
+  gpt_api_key: ""
+  
+  # Quality threshold for filtering (0.0 to 1.0)
+  quality_threshold: 0.5
+  
+  # Target languages to keep (others will be filtered out)
   target_languages:
     - en
     - zh
+  
+  # Additional filtering options
+  skip_too_many_special_chars: true
+  special_chars_threshold: 0.3
+  
+  # Whether to save detailed quality metrics in the output
+  save_quality_metrics: true
 
 formatting:
-  remove_punctuation: false
-  clean_html: true
-  fix_unicode: true
+  # Core options
+  remove_punctuation: false   # Set to true to remove punctuation
+  clean_html: true            # Set to false to keep HTML tags
+  fix_unicode: true           # Set to false to skip Unicode normalization
+  
+  # Additional options you can add
+  normalize_whitespace: true  # Normalize all whitespace sequences
+  lowercase: false            # Convert text to lowercase
+  replace_urls: true          # Replace URLs with placeholders
+  url_replacement: "[URL]"    # Placeholder for URLs
+  replace_emails: false       # Replace emails with placeholders
+  email_replacement: "[EMAIL]" # Placeholder for emails
+  replace_numbers: false      # Replace numbers with placeholders
+  number_replacement: "[NUMBER]" # Placeholder for numbers
+  
+  # Date handling options - choose one approach
+  # Option 1: Normalize dates (convert to standard format)
+  normalize_dates: false       # Normalize date formats (like 2/3~28)
+  date_format: "MM/DD"        # Format to use (MM/DD, MM-DD, or "verbose")
+  
+  # Option 2: Replace dates with placeholder (takes precedence if both are true)
+  replace_dates: true        # Replace dates with placeholder token
+  date_replacement: "[DATE]"  # Placeholder for date entities
 
 deduplication:
   enabled: true
   # Deduplication method to use
   # Options: minhash_lsh, simhash, semantic, suffix_array, dbscan, bertopic, bloom_filter
-  method: minhash_lsh
+  method: semantic
   threshold: 0.8
   ngram_size: 5
   num_permutations: 128
   band_size: 8
+  # Model name for semantic and BERTopic deduplication
+  # Default models:
+  #   all-MiniLM-L6-v2: General purpose, decent multilingual support
+  #   paraphrase-multilingual-MiniLM-L12-v2: Better multilingual support including Chinese
+  #   paraphrase-multilingual-mpnet-base-v2: Best quality for Chinese but larger model
+  #   distiluse-base-multilingual-cased-v2: Good balance of quality and performance for Chinese
+  model_name: "paraphrase-multilingual-mpnet-base-v2"
+  # Parameters for BERTopic deduplication
+  min_topic_size: 2
+  n_neighbors: 15 
+  min_dist: 0.1
+  min_cluster_size: 2
+  # Parameters for batch processing of embeddings
+  batch_size: 32
 
 output:
   path: data/output/facebook_output.json
+  
 

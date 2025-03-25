@@ -46,46 +46,53 @@ class DedupManager(BaseProcessor):
         self.method_name = config.get("method", "minhash_lsh")
         
         # Lazy import to avoid circular dependencies
-        # Register available methods
-        from deduplication.minhash_lsh import MinHashLSH
-        self.register_method("minhash_lsh", MinHashLSH)
-        
-        # Import and register other methods conditionally
-        try:
-            from deduplication.simhash import SimHash
-            self.register_method("simhash", SimHash)
-        except ImportError:
-            self.logger.warning("SimHash not available")
-            
-        try:
-            from deduplication.semantic_dedup import SemanticDeduplicate
-            self.register_method("semantic", SemanticDeduplicate)
-        except ImportError:
-            self.logger.warning("Semantic deduplication not available")
-            
-        try:
-            from deduplication.suffix_array import SuffixArrayDedup
-            self.register_method("suffix_array", SuffixArrayDedup)
-        except ImportError:
-            self.logger.warning("Suffix Array deduplication not available")
-            
-        try:
-            from deduplication.dbscan_dedup import DBSCANDedup
-            self.register_method("dbscan", DBSCANDedup)
-        except ImportError:
-            self.logger.warning("DBSCAN deduplication not available")
-            
-        try:
-            from deduplication.bertopic_dedup import BERTopicDedup
-            self.register_method("bertopic", BERTopicDedup)
-        except ImportError:
-            self.logger.warning("BERTopic deduplication not available")
-            
-        try:
-            from deduplication.bloom_filter import BloomFilterDedup
-            self.register_method("bloom_filter", BloomFilterDedup)
-        except ImportError:
-            self.logger.warning("Bloom Filter deduplication not available")
+        # Only import and register the selected method to avoid dependency issues
+        if self.enabled:
+            if self.method_name == "minhash_lsh":
+                from deduplication.minhash_lsh import MinHashLSH
+                self.register_method("minhash_lsh", MinHashLSH)
+            elif self.method_name == "simhash":
+                try:
+                    from deduplication.simhash import SimHash
+                    self.register_method("simhash", SimHash)
+                except ImportError:
+                    self.logger.error("SimHash not available - missing dependencies")
+                    self.enabled = False
+            elif self.method_name == "semantic":
+                try:
+                    from deduplication.semantic_dedup import SemanticDeduplicate
+                    self.register_method("semantic", SemanticDeduplicate)
+                except ImportError:
+                    self.logger.error("Semantic deduplication not available - missing dependencies")
+                    self.enabled = False
+            elif self.method_name == "suffix_array":
+                try:
+                    from deduplication.suffix_array import SuffixArrayDedup
+                    self.register_method("suffix_array", SuffixArrayDedup)
+                except ImportError:
+                    self.logger.error("Suffix Array deduplication not available - missing dependencies")
+                    self.enabled = False
+            elif self.method_name == "dbscan":
+                try:
+                    from deduplication.dbscan_dedup import DBSCANDedup
+                    self.register_method("dbscan", DBSCANDedup)
+                except ImportError:
+                    self.logger.error("DBSCAN deduplication not available - missing dependencies")
+                    self.enabled = False
+            elif self.method_name == "bertopic":
+                try:
+                    from deduplication.bertopic_dedup import BERTopicDedup
+                    self.register_method("bertopic", BERTopicDedup)
+                except ImportError:
+                    self.logger.error("BERTopic deduplication not available - missing dependencies")
+                    self.enabled = False
+            elif self.method_name == "bloom_filter":
+                try:
+                    from deduplication.bloom_filter import BloomFilterDedup
+                    self.register_method("bloom_filter", BloomFilterDedup)
+                except ImportError:
+                    self.logger.error("Bloom Filter deduplication not available - missing dependencies")
+                    self.enabled = False
         
         # Initialize the selected method
         if not self.enabled:

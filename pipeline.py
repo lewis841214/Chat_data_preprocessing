@@ -13,9 +13,10 @@ import json
 import yaml  # Added for debugging
 import codecs  # Added for UTF-8 handling
 from typing import Dict, List, Any, Optional
+from tqdm import tqdm
 
 from config_handler import ConfigHandler
-from platform.handler_factory import PlatformHandlerFactory
+from platform_handlers.handler_factory import PlatformHandlerFactory
 from cleaning.cleaner import Cleaner
 from filtering.filter_manager import FilterManager
 from formatting.formatter import Formatter
@@ -46,8 +47,12 @@ class Pipeline:
             self.logger.warning("No platform section found in config")
         
         # Initialize components
-        self.platform_handler = PlatformHandlerFactory.get_handler(self.config)
-        self.logger.info(f"Using platform handler: {self.platform_handler.__class__.__name__}")
+        self.platform_handler = None
+        if self.is_platform_configured():
+            self.platform_handler = PlatformHandlerFactory.get_handler(self.config)
+            self.logger.info(f"Using platform handler: {self.platform_handler.__class__.__name__}")
+        else:
+            self.logger.info("Platform not configured, will load from formatted data path")
         
         self.cleaner = Cleaner(self.config["cleaning"])
         self.filter_manager = FilterManager(self.config["filtering"])
@@ -66,19 +71,105 @@ class Pipeline:
         )
         return logging.getLogger("ChatPipeline")
     
+    def is_platform_configured(self) -> bool:
+        """
+        Check if platform is properly configured.
+        
+        Returns:
+            bool: True if platform is configured, False otherwise
+        """
+        return (
+            "platform" in self.config 
+            and self.config["platform"].get("type") is not None
+            and self.config["platform"].get("platform_data_path") is not None
+        )
+    
+    def load_formatted_data(self) -> List[Dict[str, Any]]:
+        """
+        Load data directly from the formatted data path.
+        
+        Returns:
+            List[Dict[str, Any]]: The loaded formatted data
+        """
+        if "platform" not in self.config or "input_formated_path" not in self.config["platform"]:
+            self.logger.error("No input_formated_path specified in config")
+            return []
+            
+        input_path = self.config["platform"]["input_formated_path"]
+        self.logger.info(f"Loading data from formatted input path: {input_path}")
+        
+        data = []
+        
+        if not os.path.exists(input_path):
+            self.logger.error(f"Formatted input path does not exist: {input_path}")
+            return []
+            
+        try:
+            if os.path.isdir(input_path):
+                # If it's a directory, recursively search for all JSON files
+                for root, dirs, files in tqdm(os.walk(input_path)):
+                    for filename in files:
+                        if filename.endswith('.json'):
+                            file_path = os.path.join(root, filename)
+                            self.logger.debug(f"Loading data from: {file_path}")
+                            try:
+                                with open(file_path, 'r', encoding='utf-8') as f:
+                                    file_data = json.load(f)
+                                    if isinstance(file_data, list):
+                                        data.extend(file_data)
+                                    else:
+                                        data.append(file_data)
+                            except Exception as file_e:
+                                self.logger.warning(f"Error loading file {file_path}: {str(file_e)}")
+            else:
+                # If it's a file, load it directly
+                with open(input_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            self.logger.info(f"Loaded {len(data)} records from formatted input")
+            return data
+            
+        except Exception as e:
+            self.logger.error(f"Error loading formatted data: {str(e)}")
+            return []
+
+    def _generate_final_corpus(self, data: List[Dict[str, Any]]) -> None:
+        """
+        Generate the final corpus in the required JSON format.
+        
+        Args:
+            data: Processed data to be saved
+        """
+        output_path = self.config["output"]["path"]
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Use proper UTF-8 encoding when writing the output file
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        
+        self.logger.info(f"Final corpus saved to {output_path}")
+        self.logger.info(f"Total conversations: {len(data)}")
+    
     def run(self) -> None:
         """
         Execute the full pipeline process.
         """
         self.logger.info("Starting pipeline execution")
         
-        # Step 1: Platform-specific data handling
-        self.logger.info("Step 1: Platform-specific data handling")
-        platform_data = self.platform_handler.process()
+        # Step 1: Get data - either from platform handler or formatted input
+        if self.is_platform_configured() and self.platform_handler is not None:
+            self.logger.info("Step 1: Platform-specific data handling")
+            data = self.platform_handler.process()
+        else:
+            self.logger.info("Step 1: Loading from formatted data path (skipping platform processing)")
+            data = self.load_formatted_data()
+            
+        if not data:
+            self.logger.error("No data loaded. Pipeline execution failed.")
+            return
         
         # Step 2: Clean data (remove useless content)
         self.logger.info("Step 2: Cleaning - removing useless content")
-        cleaned_data = self.cleaner.process(platform_data)
+        cleaned_data = self.cleaner.process(data)
         
         # Step 3: Quality filtering
         self.logger.info("Step 3: Quality filtering")
@@ -102,23 +193,6 @@ class Pipeline:
         
         self.logger.info("Pipeline execution completed successfully")
     
-    def _generate_final_corpus(self, data: List[Dict[str, Any]]) -> None:
-        """
-        Generate the final corpus in the required JSON format.
-        
-        Args:
-            data: Processed data to be saved
-        """
-        output_path = self.config["output"]["path"]
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
-        # Use proper UTF-8 encoding when writing the output file
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        
-        self.logger.info(f"Final corpus saved to {output_path}")
-        self.logger.info(f"Total conversations: {len(data)}")
-
 
 def main():
     """Main entry point for the pipeline."""

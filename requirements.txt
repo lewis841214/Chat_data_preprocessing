@@ -8,5 +8,31 @@ langdetect>=1.0.9
 beautifulsoup4>=4.11.1
 html5lib>=1.1
 ftfy>=6.1.1
+html>=3.0.0
 scikit-learn>=1.1.1
 rapidfuzz>=2.11.1 
+
+# Core filtering dependencies
+fasttext>=0.9.2
+# KenLM installation: pip install https://github.com/kpu/kenlm/archive/master.zip
+kenlm
+tqdm
+ftfy
+
+# IMPORTANT: If you have a directory named 'platform' in your project,
+# rename it to 'platform_handlers' to avoid conflicts with Python's built-in platform module
+
+# PyTorch - updated for compatibility with sentence-transformers
+# CPU-only version (recommended for most users)
+torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu
+torchvision>=0.15.0 --index-url https://download.pytorch.org/whl/cpu
+torchaudio>=2.0.0 --index-url https://download.pytorch.org/whl/cpu
+sentence-transformers>=2.2.2
+
+# Alternative PyTorch with GPU support (uncomment only one option below)
+# For CUDA 11.7
+# torch>=1.13.0+cu117 torchvision>=0.14.0+cu117 --extra-index-url https://download.pytorch.org/whl/cu117
+# For CUDA 11.8
+# torch>=2.0.0+cu118 torchvision>=0.15.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+# For CUDA 12.1
+# torch>=2.1.0+cu121 torchvision>=0.16.0+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
