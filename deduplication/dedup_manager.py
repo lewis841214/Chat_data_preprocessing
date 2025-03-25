@@ -106,12 +106,13 @@ class DedupManager(BaseProcessor):
             self.method = None
             self.logger.error(f"Deduplication method '{self.method_name}' not found")
     
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
@@ -124,8 +125,8 @@ class DedupManager(BaseProcessor):
             self.logger.error("Invalid input data format")
             return data
             
-        self.logger.info(f"Starting deduplication on {len(data)} items")
-        deduplicated_data = self.method.process(data)
+        self.logger.info(f"Starting deduplication on {len(data)} items using key: {key}")
+        deduplicated_data = self.method.process(data, key=key)
         self.logger.info(f"Deduplication complete: {len(data)} -> {len(deduplicated_data)} items")
         
         return deduplicated_data 

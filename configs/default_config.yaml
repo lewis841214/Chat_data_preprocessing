@@ -1,4 +1,4 @@
-# Default configuration for Chat Data Preprocessing Pipeline
+# Default configuration for Chat Data Preprocessing Pipeline. testing for testing mode which will only process 500 conversations
 mode: testing
 
 platform: # optional
@@ -13,7 +13,7 @@ platform: # optional
   input_formated_path: data/formated_data/
   # Path for final processed output
   output_path: data/output/
-  # Set your Facebook username to correctly identify your messages as "User"
+  # Set your Facebook username to correctly identify your messages as "assistant"
   # (If not set, will try to identify automatically using heuristics)
   user_name: "大大力良品鍍膜"
 
@@ -110,6 +110,6 @@ deduplication:
   batch_size: 32
 
 output:
-  path: data/output/facebook_output.json
-  
+  conversation_path: data/output/facebook_output.json
+  qa_path: data/output/qa_pairs_corpus.json
 

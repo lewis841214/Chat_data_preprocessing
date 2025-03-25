@@ -27,19 +27,20 @@ class DeduplicationMethod(BaseProcessor, abc.ABC):
         self.threshold = config.get("threshold", 0.8)
         
     @abc.abstractmethod
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
         """
         pass
     
-    def _extract_text(self, item: Dict[str, Any]) -> str:
+    def _extract_text(self, item: Dict[str, Any], key: str = "conversation") -> str:
         """
         Extract text from a conversation for deduplication.
         
@@ -49,18 +50,12 @@ class DeduplicationMethod(BaseProcessor, abc.ABC):
         Returns:
             Extracted text
         """
-        if not self._validate_conversation(item):
-            return ""
+
             
-        conversation = item["conversation"]
-        texts = []
+        message_string = str(item[key])
+        texts = message_string.replace("[", " ").replace("]", " ").replace("{", " ").replace("}", " ")
         
-        for message in conversation:
-            role = message.get("role", "")
-            content = message.get("content", "")
-            texts.append(f"{role}: {content}")
-            
-        return "\n".join(texts)
+        return texts # "\n".join(texts)
     
     def _select_representative(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
         """

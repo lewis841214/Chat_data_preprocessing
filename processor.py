@@ -71,8 +71,8 @@ class BaseProcessor(abc.ABC):
         Returns:
             True if conversation is valid, False otherwise
         """
-        if "conversation" not in conv:
-            return False
+        # if "conversation" not in conv:
+        #     return False
             
         conversation = conv["conversation"]
         if not isinstance(conversation, list) or not conversation:

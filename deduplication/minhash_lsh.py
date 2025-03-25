@@ -46,12 +46,13 @@ class MinHashLSH(DeduplicationMethod):
         self.logger.info(f"Initialized MinHash LSH with {self.num_permutations} permutations, "
                          f"{self.band_size} band size, and {self.num_bands} bands")
     
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply MinHash LSH deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
@@ -59,12 +60,12 @@ class MinHashLSH(DeduplicationMethod):
         if not data:
             return []
             
-        self.logger.info(f"Running MinHash LSH on {len(data)} items")
+        self.logger.info(f"Running MinHash LSH on {len(data)} items with key: {key}")
         
         # Step 1: Generate MinHash signatures for all items
         signatures = {}
         for idx, item in tqdm(enumerate(data)):
-            text = self._extract_text(item)
+            text = self._extract_text(item, key)
             if not text:
                 continue
                 

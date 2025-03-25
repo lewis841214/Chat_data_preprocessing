@@ -98,7 +98,7 @@ class Pipeline:
         input_path = self.config["platform"]["input_formated_path"]
         self.logger.info(f"Loading data from formatted input path: {input_path}")
         
-        data = []
+        conversation_data = []
         
         if not os.path.exists(input_path):
             self.logger.error(f"Formatted input path does not exist: {input_path}")
@@ -111,35 +111,35 @@ class Pipeline:
                     for filename in files:
                         if filename.endswith('.json'):
                             file_path = os.path.join(root, filename)
-                            self.logger.debug(f"Loading data from: {file_path}")
+                            self.logger.debug(f"Loading conversation data from: {file_path}")
                             try:
                                 with open(file_path, 'r', encoding='utf-8') as f:
                                     file_data = json.load(f)
                                     if isinstance(file_data, list):
-                                        data.extend(file_data)
+                                        conversation_data.extend(file_data)
                                     else:
-                                        data.append(file_data)
+                                        conversation_data.append(file_data)
                             except Exception as file_e:
                                 self.logger.warning(f"Error loading file {file_path}: {str(file_e)}")
             else:
                 # If it's a file, load it directly
                 with open(input_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-            self.logger.info(f"Loaded {len(data)} records from formatted input")
-            return data
+                    conversation_data = json.load(f)
+            self.logger.info(f"Loaded {len(conversation_data)} conversations from formatted input")
+            return conversation_data
             
         except Exception as e:
-            self.logger.error(f"Error loading formatted data: {str(e)}")
+            self.logger.error(f"Error loading formatted conversation data: {str(e)}")
             return []
 
-    def _generate_final_corpus(self, data: List[Dict[str, Any]]) -> None:
+    def _generate_final_corpus(self, data: List[Dict[str, Any]], type: str = "conversation") -> None:
         """
         Generate the final corpus in the required JSON format.
         
         Args:
-            data: Processed data to be saved
+            conversation_data: Processed conversation data to be saved
         """
-        output_path = self.config["output"]["path"]
+        output_path = self.config["output"][f"{type}_path"]
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         # Use proper UTF-8 encoding when writing the output file
@@ -147,7 +147,7 @@ class Pipeline:
             json.dump(data, f, ensure_ascii=False, indent=2)
         
         self.logger.info(f"Final corpus saved to {output_path}")
-        self.logger.info(f"Total conversations: {len(data)}")
+        self.logger.info(f"Total {type}: {len(data)}")
     
     def run(self) -> None:
         """
@@ -155,47 +155,122 @@ class Pipeline:
         """
         self.logger.info("Starting pipeline execution")
         
-        # Step 1: Get data - either from platform handler or formatted input
+        # Step 1: Get conversation data - either from platform handler or formatted input
         if self.is_platform_configured() and self.platform_handler is not None:
-            self.logger.info("Step 1: Platform-specific data handling")
-            data = self.platform_handler.process()
+            self.logger.info("Step 1: Platform-specific conversation data handling")
+            conversation_data = self.platform_handler.process()
         else:
             self.logger.info("Step 1: Loading from formatted data path (skipping platform processing)")
-            data = self.load_formatted_data()
+            conversation_data = self.load_formatted_data()
             
-        if not data:
-            self.logger.error("No data loaded. Pipeline execution failed.")
+        if not conversation_data:
+            self.logger.error("No conversation data loaded. Pipeline execution failed.")
             return
         
         if self.config["mode"] == "testing":
-            data = data[:500]
+            conversation_data = conversation_data[:500]
 
-        # Step 2: Clean data (remove useless content)
-        self.logger.info("Step 2: Cleaning - removing useless content")
-        cleaned_data = self.cleaner.process(data)
+        # Step 2: Clean conversation data (remove useless content)
+        self.logger.info("Step 2: Cleaning - removing useless content from conversations")
+        cleaned_conversations = self.cleaner.process(conversation_data)
         
         # Step 3: Quality filtering
-        self.logger.info("Step 3: Quality filtering")
-        filtered_data = self.filter_manager.process(cleaned_data)
+        self.logger.info("Step 3: Quality filtering of conversations")
+        filtered_conversations = self.filter_manager.process(cleaned_conversations)
         
         # Step 4: Text formatting
-        self.logger.info("Step 4: Text formatting")
-        formatted_data = self.formatter.process(filtered_data)
+        self.logger.info("Step 4: Text formatting for conversations")
+        formatted_conversations = self.formatter.process(filtered_conversations)
+        
+        # Generate question-answer pairs (as a separate process that doesn't affect the main flow)
+        self.logger.info("Generating question-answer pairs from conversations")
+        qa_pairs = self._conversations_to_qa_pairs(formatted_conversations)
+        self.logger.info(f"Generated {len(qa_pairs)} question-answer pairs from {len(formatted_conversations)} conversations")
+    
+        # Save QA pairs to a separate output file if configured
+        qa_output_path = self.config["output"].get("qa_path")
+        if qa_output_path:
+            os.makedirs(os.path.dirname(qa_output_path), exist_ok=True)
+            with open(qa_output_path, 'w', encoding='utf-8') as f:
+                json.dump(qa_pairs, f, ensure_ascii=False, indent=2)
+            self.logger.info(f"QA pairs saved to {qa_output_path}")
+
         
         # Step 5: Deduplication (optional based on config)
         if self.config["deduplication"]["enabled"]:
-            self.logger.info("Step 5: Deduplication")
-            deduplicated_data = self.dedup_manager.process(formatted_data)
+            self.logger.info("Step 5: Deduplication of conversations")
+            deduplicated_conversations = self.dedup_manager.process(formatted_conversations, key="conversation")
+            deduplicated_qa_pairs = self.dedup_manager.process(qa_pairs, key="question")
         else:
-            self.logger.info("Step 5: Deduplication skipped")
-            deduplicated_data = formatted_data
+            self.logger.info("Step 5: Conversation deduplication skipped")
+            deduplicated_conversations = formatted_conversations
+            deduplicated_qa_pairs = qa_pairs
+
         
         # Step 6: Generate final corpus
-        self.logger.info("Step 6: Generating final corpus")
-        self._generate_final_corpus(deduplicated_data)
+        self.logger.info("Step 6: Generating final conversation corpus")
+        self._generate_final_corpus(deduplicated_conversations, type="conversation")
+        self._generate_final_corpus(deduplicated_qa_pairs, type="qa")
         
-        self.logger.info("Pipeline execution completed successfully")
+        self.logger.info("Conversation pipeline execution completed successfully")
     
+    def _conversations_to_qa_pairs(self, conversations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Transform conversations into question-answer pairs.
+        
+        Rules:
+        1. The "User" messages are treated as questions
+        2. All subsequent "Assistant" messages until the next "User" message are concatenated as the answer
+        
+        Args:
+            conversations: List of conversation data
+        
+        Returns:
+            List[Dict[str, Any]]: Question-answer pairs derived from conversations
+        """
+        qa_pairs = []
+        
+        for conversation in conversations:
+            if "conversation" not in conversation:
+                self.logger.warning(f"Conversation missing 'messages' field: {conversation}")
+                continue
+                
+            messages = conversation.get("conversation", [])
+            current_question = None
+            current_answers = []
+            
+            for message in messages:
+                role = message.get("role")
+                content = message.get("content", "")
+                
+                if role == "User":
+                    # If we have a previous question and collected answers, save the QA pair
+                    if current_question and current_answers:
+                        qa_pairs.append({
+                            "question": current_question,
+                            "answer": " ".join(current_answers),
+                            "conversation_id": conversation.get("conversation_id", ""),
+                            "metadata": conversation.get("metadata", {})
+                        })
+                    
+                    # Start a new QA pair
+                    current_question = content
+                    current_answers = []
+                
+                elif role == "Assistant" and current_question:
+                    # Add this answer to the current collection
+                    if content.strip():  # Only add non-empty content
+                        current_answers.append(content + '\n')
+            
+            # Don't forget the last QA pair in the conversation
+            if current_question and current_answers:
+                qa_pairs.append({
+                    "question": current_question,
+                    "answer": " ".join(current_answers),
+                    "conversation_id": conversation.get("conversation_id", ""),
+                    "metadata": conversation.get("metadata", {})
+                })
+        return qa_pairs
 
 def main():
     """Main entry point for the pipeline."""

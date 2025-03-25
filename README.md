@@ -1,87 +1,50 @@
 # Chat Data Preprocessing Pipeline
 
-A comprehensive framework for preprocessing and cleaning chat data for training language models. This pipeline handles the full process from raw data to a clean, deduplicated corpus.
+A comprehensive framework for preprocessing and cleaning structured conversation data for training language models. This pipeline handles the full process from raw data to clean, deduplicated outputs.
+
+## Overview
+
+The Chat Data Preprocessing Pipeline takes **structured conversation data** as input and produces:
+- **Clean, deduplicated conversations** - For conversational model training
+- **Deduplicated question-answer pairs** - For instruction-tuning and QA systems
 
 ## Features
 
-- **Platform-specific data handlers** - Process data from various sources (Reddit, Twitter, Discord, etc.)
-- **Content cleaning** - Remove useless content like stopwords, URLs, and irrelevant paragraphs
-- **Quality filtering** - Detect language, assess quality with KenLM, and apply ML classifiers
-- **Text formatting** - Clean HTML tags, fix Unicode issues, and normalize text
-- **Near-duplicate detection** - Several algorithms for efficient deduplication (MinHash, SimHash, Semantic, etc.)
-- **Configurable pipeline** - YAML-based configuration with sensible defaults
+- **Flexible deduplication algorithms**:
+  - MinHash LSH
+  - SimHash
+  - Semantic deduplication
+  - DBSCAN clustering
+  - BERTopic-based deduplication
+  - Bloom filter
+  - Suffix array-based methods
+  
+- **Customizable processing**: Configure each stage of the pipeline to suit your requirements
 
-## Pipeline Flow
+- **Key processing capabilities**:
+  - Near-duplicate detection and removal
+  - Intelligent representative selection from duplicate clusters
+  - Support for both conversation-mode and QA-pair processing
 
-```
-┌───────────────────────┐
-│ Large History Chat    │
-│ Corpus                │
-│ - Open source         │
-│ - Crawled             │
-│ - Commercial          │
-└───────────┬───────────┘
-            │
-            ▼
-┌───────────────────────┐
-│ Platform Specific     │
-│ Data Handler          │
-│ - API data adapters   │
-│ - Format conversion   │
-│ - Platform metadata   │
-│ - Source labeling     │
-└───────────┬───────────┘
-            │
-            ▼
-┌───────────────────────┐
-│ 1. Remove Useless     │
-│    Content            │
-│ - Filter stopwords    │
-│ - Language filtering  │
-│ - URL filtering       │
-│ - Paragraph removal   │
-│ - Exact deduplication │
-└───────────┬───────────┘
-            │
-            ▼
-┌───────────────────────┐
-│ 2. Quality Filtering  │
-│ - FastText language   │
-│   detection           │
-│ - KenLM quality       │
-│   assessment          │
-│ - GPT evaluation      │
-│ - Logistic Regression │
-└───────────┬───────────┘
-            │
-            ▼
-┌───────────────────────┐
-│ 3. Text Formatting    │
-│ - Remove punctuation  │
-│ - Clean HTML tags     │
-│ - Fix unicode issues  │
-└───────────┬───────────┘
-            │
-            ▼
-┌───────────────────────┐
-│ 4. Near-Duplicate     │
-│    Detection          │
-│ - MinHash & LSH       │
-│ - SimHash             │
-│ - Semantic dedup      │
-│ - Suffix Array method │
-│ - DBSCAN clustering   │
-│ - BERTopic approach   │
-│ - Bloom filters       │
-└───────────┬───────────┘
-            │
-            ▼
-┌───────────────────────┐
-│ 5. Final Corpus       │
-│    Generation         │
-│ - JSON format         │
-└───────────────────────┘
-```
+## Usage
+
+The pipeline accepts structured conversation data and can process either full conversations or extract and deduplicate question-answer pairs based on your configuration.
+
+### Input Format
+
+Structured conversation data with messages containing roles and content.
+
+### Output
+
+- Deduplicated, cleaned conversations
+- Deduplicated question-answer pairs for instruction fine-tuning
+
+## Configuration
+
+The pipeline supports extensive configuration options including:
+- Deduplication method selection
+- Similarity thresholds
+- Processing parameters
 
 ## Project Structure
 
@@ -109,7 +72,6 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-
 
 Run the pipeline:
 ```bash
@@ -182,6 +144,78 @@ The output is a list of standardized conversation objects in JSON format:
 1. Create a new method in the `deduplication` directory (e.g., `simhash.py`).
 2. Implement the `process` method.
 3. Register the method in `deduplication/dedup_manager.py`.
+
+## Pipeline Flow
+
+```
+┌───────────────────────┐
+│ Large History Chat    │
+│ Corpus                │
+│ - Open source         │
+│ - Crawled             │
+│ - Commercial          │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│ Platform Specific     │
+│ Data Handler          │
+│ - API data adapters   │
+│ - Format conversion   │
+│ - Platform metadata   │
+│ - Source labeling     │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│ 1. Remove Useless     │
+│    Content            │
+│ - Filter stopwords    │
+│ - Language filtering  │
+│ - URL filtering       │
+│ - Paragraph removal   │
+│ - Exact deduplication │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│ 2. Quality Filtering  │
+│ - FastText language   │
+│   detection           │
+│ - KenLM quality       │
+│   assessment          │
+│ - GPT evaluation      │
+│ - Logistic Regression │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│ 3. Text Formatting    │
+│ - Remove punctuation  │
+│ - Clean HTML tags     │
+│ - Fix unicode issues  │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│ 4. Near-Duplicate     │
+│    Detection          │
+│ - MinHash & LSH       │
+│ - SimHash             │
+│ - Semantic dedup      │
+│ - Suffix Array method │
+│ - DBSCAN clustering   │
+│ - BERTopic approach   │
+│ - Bloom filters       │
+└───────────┬───────────┘
+            │
+            ▼
+┌───────────────────────┐
+│ 5. Final Corpus       │
+│    Generation         │
+│ - JSON format         │
+└───────────────────────┘
+```
 
 ## License
 

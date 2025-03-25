@@ -38,12 +38,13 @@ class SimHash(DeduplicationMethod):
                          f"{self.ngram_size} n-gram size, "
                          f"and {self.max_hamming_distance} max Hamming distance")
     
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply SimHash deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
@@ -51,27 +52,26 @@ class SimHash(DeduplicationMethod):
         if not data:
             return []
             
-        self.logger.info(f"Running SimHash on {len(data)} items")
+        self.logger.info(f"Running SimHash on {len(data)} items with key: {key}")
         
-        # Step 1: Generate SimHash for all items
+        # Compute SimHash for each document
         hash_values = {}
         for idx, item in enumerate(data):
-            text = self._extract_text(item)
+            text = self._extract_text(item, key)
             if not text:
                 continue
                 
             hash_values[idx] = self._compute_simhash(text)
-        
-        # Step 2: Find similar items (clusters) based on Hamming distance
+            
+        # Find clusters of similar documents
         clusters = self._find_clusters(hash_values)
         
-        # Step 3: Select representatives from each cluster
-        deduplicated = self._select_representatives(clusters, data)
+        # Select representatives from each cluster
+        result = self._select_representatives(clusters, data)
         
-        self.logger.info(f"Deduplication reduced {len(data)} to {len(deduplicated)} items "
-                         f"({len(clusters)} clusters)")
+        self.logger.info(f"Deduplication reduced {len(data)} to {len(result)} items")
         
-        return deduplicated
+        return result
     
     def _get_ngrams(self, text: str) -> List[str]:
         """
@@ -245,7 +245,7 @@ class SimHash(DeduplicationMethod):
         
         return result
     
-    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None) -> bool:
+    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None, key: str = "conversation") -> bool:
         """
         Check if two items are similar based on SimHash and Hamming distance.
         
@@ -253,12 +253,13 @@ class SimHash(DeduplicationMethod):
             item1: First item
             item2: Second item
             threshold: Optional threshold override (not used in SimHash)
+            key: The key to use for text extraction from items
             
         Returns:
             True if items are similar, False otherwise
         """
-        text1 = self._extract_text(item1)
-        text2 = self._extract_text(item2)
+        text1 = self._extract_text(item1, key)
+        text2 = self._extract_text(item2, key)
         
         if not text1 or not text2:
             return False
