@@ -14,6 +14,7 @@ import yaml  # Added for debugging
 import codecs  # Added for UTF-8 handling
 from typing import Dict, List, Any, Optional
 from tqdm import tqdm
+from data_processor.processor_factory import DataProcessorFactory
 
 from config_handler import ConfigHandler
 from platform_handlers.handler_factory import PlatformHandlerFactory
@@ -54,6 +55,18 @@ class Pipeline:
         else:
             self.logger.info("Platform not configured, will load from formatted data path")
         
+        # Initialize data processor
+        self.data_processor = None
+        if "data_processing" in self.config:
+            try:
+                self.data_processor = DataProcessorFactory.get_processor(self.config)
+                self.logger.info(f"Using data processor: {self.data_processor.__class__.__name__}")
+            except Exception as e:
+                self.logger.error(f"Error initializing data processor: {str(e)}")
+        else:
+            self.logger.warning("No data processing configured")
+
+
         self.cleaner = Cleaner(self.config["cleaning"])
         self.filter_manager = FilterManager(self.config["filtering"])
         self.formatter = Formatter(self.config["formatting"])
@@ -162,13 +175,23 @@ class Pipeline:
         else:
             self.logger.info("Step 1: Loading from formatted data path (skipping platform processing)")
             conversation_data = self.load_formatted_data()
-            
+        
+        
         if not conversation_data:
             self.logger.error("No conversation data loaded. Pipeline execution failed.")
             return
         
         if self.config["mode"] == "testing":
             conversation_data = conversation_data[:500]
+
+           
+        # Step 2: Apply data processing if configured
+        if self.data_processor is not None:
+            self.logger.info("Step 2: Applying data processing filters")
+            conversation_data = self.data_processor.process(conversation_data)
+            self.logger.info(f"Processed {len(conversation_data)} conversations")
+            
+        
 
         # Step 2: Clean conversation data (remove useless content)
         self.logger.info("Step 2: Cleaning - removing useless content from conversations")

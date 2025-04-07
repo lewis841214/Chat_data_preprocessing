@@ -53,12 +53,13 @@ class SemanticDeduplicate(DeduplicationMethod):
         
         self.logger.info(f"Initialized Semantic deduplication with model {self.model_name}")
     
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply semantic deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
@@ -66,21 +67,21 @@ class SemanticDeduplicate(DeduplicationMethod):
         if not data:
             return []
             
-        self.logger.info(f"Running semantic deduplication on {len(data)} items")
+        self.logger.info(f"Running semantic deduplication on {len(data)} items with key: {key}")
         
         # Step 1: Extract text from each item
         texts = []
         valid_indices = []
         
         for idx, item in enumerate(data):
-            text = self._extract_text(item)
+            text = self._extract_text(item, key)
             if text:
                 texts.append(text)
                 valid_indices.append(idx)
         
         if not texts:
             return data
-        breakpoint()
+        
         # Step 2: Generate embeddings for all texts
         self.logger.info(f"Generating embeddings for {len(texts)} texts")
         embeddings = self.model.encode(texts, batch_size=self.batch_size)
@@ -206,7 +207,7 @@ class SemanticDeduplicate(DeduplicationMethod):
         
         return result
     
-    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None) -> bool:
+    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None, key: str = "conversation") -> bool:
         """
         Check if two items are similar based on semantic similarity.
         
@@ -214,12 +215,13 @@ class SemanticDeduplicate(DeduplicationMethod):
             item1: First item
             item2: Second item
             threshold: Optional threshold override
+            key: The key to use for text extraction from items
             
         Returns:
             True if items are similar, False otherwise
         """
-        text1 = self._extract_text(item1)
-        text2 = self._extract_text(item2)
+        text1 = self._extract_text(item1, key)
+        text2 = self._extract_text(item2, key)
         
         if not text1 or not text2:
             return False

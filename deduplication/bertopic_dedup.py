@@ -85,12 +85,13 @@ class BERTopicDedup(DeduplicationMethod):
         
         self.logger.info(f"Initialized BERTopic deduplication with min_topic_size={self.min_topic_size}")
     
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply BERTopic deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
@@ -98,14 +99,14 @@ class BERTopicDedup(DeduplicationMethod):
         if not data:
             return []
             
-        self.logger.info(f"Running BERTopic deduplication on {len(data)} items")
+        self.logger.info(f"Running BERTopic deduplication on {len(data)} items with key: {key}")
         
         # Step 1: Extract text from each item
         texts = []
         valid_indices = []
         
         for idx, item in enumerate(data):
-            text = self._extract_text(item)
+            text = self._extract_text(item, key)
             if text:
                 texts.append(text)
                 valid_indices.append(idx)
@@ -175,23 +176,24 @@ class BERTopicDedup(DeduplicationMethod):
         
         return result
     
-    def _get_item_embedding(self, item: Dict[str, Any]) -> np.ndarray:
+    def _get_item_embedding(self, item: Dict[str, Any], key: str = "conversation") -> np.ndarray:
         """
         Get embedding for an item.
         
         Args:
             item: Input item
+            key: The key to use for text extraction from items
             
         Returns:
             Embedding vector
         """
-        text = self._extract_text(item)
+        text = self._extract_text(item, key)
         if not text:
             return np.zeros(self.embedding_model.get_sentence_embedding_dimension())
             
         return self.embedding_model.encode(text)
     
-    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None) -> bool:
+    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None, key: str = "conversation") -> bool:
         """
         Check if two items are similar based on their embeddings.
         
@@ -199,15 +201,19 @@ class BERTopicDedup(DeduplicationMethod):
             item1: First item
             item2: Second item
             threshold: Optional threshold override
+            key: The key to use for text extraction from items
             
         Returns:
             True if items are similar, False otherwise
         """
-        emb1 = self._get_item_embedding(item1)
-        emb2 = self._get_item_embedding(item2)
+        # Calculate embeddings
+        emb1 = self._get_item_embedding(item1, key)
+        emb2 = self._get_item_embedding(item2, key)
         
         # Calculate cosine similarity
         similarity = np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
         
-        threshold = threshold if threshold is not None else self.threshold
-        return similarity >= threshold 
+        # Use provided threshold or default
+        thresh = threshold if threshold is not None else self.threshold
+        
+        return similarity >= thresh 

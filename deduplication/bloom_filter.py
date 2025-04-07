@@ -160,12 +160,13 @@ class BloomFilterDedup(DeduplicationMethod):
         self.logger.info(f"Initialized Bloom Filter deduplication with capacity={self.capacity}, "
                          f"error_rate={self.error_rate}")
     
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply Bloom filter deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
@@ -173,7 +174,7 @@ class BloomFilterDedup(DeduplicationMethod):
         if not data:
             return []
             
-        self.logger.info(f"Running Bloom Filter deduplication on {len(data)} items")
+        self.logger.info(f"Running Bloom Filter deduplication on {len(data)} items with key: {key}")
         
         # Create a bloom filter
         bloom_filter = BloomFilter(self.capacity, self.error_rate)
@@ -184,7 +185,7 @@ class BloomFilterDedup(DeduplicationMethod):
         
         # Find duplicates
         for idx, item in enumerate(data):
-            text = self._extract_text(item)
+            text = self._extract_text(item, key)
             if not text:
                 continue
                 
@@ -227,7 +228,7 @@ class BloomFilterDedup(DeduplicationMethod):
             
         return text
     
-    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None) -> bool:
+    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None, key: str = "conversation") -> bool:
         """
         Check if two items are exact duplicates.
         
@@ -235,12 +236,13 @@ class BloomFilterDedup(DeduplicationMethod):
             item1: First item
             item2: Second item
             threshold: Optional threshold override (not used in Bloom Filter)
+            key: The key to use for text extraction from items
             
         Returns:
             True if items are exact duplicates, False otherwise
         """
-        text1 = self._extract_text(item1)
-        text2 = self._extract_text(item2)
+        text1 = self._extract_text(item1, key)
+        text2 = self._extract_text(item2, key)
         
         if not text1 or not text2:
             return False

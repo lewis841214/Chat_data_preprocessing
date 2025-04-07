@@ -51,12 +51,13 @@ class SuffixArrayDedup(DeduplicationMethod):
         self.logger.info(f"Initialized Suffix Array deduplication with min substring length "
                          f"{self.min_substring_length} and similarity threshold {self.similarity_threshold}")
     
-    def process(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def process(self, data: List[Dict[str, Any]], key: str = "conversation") -> List[Dict[str, Any]]:
         """
         Apply suffix array deduplication to the input data.
         
         Args:
             data: Input data to deduplicate
+            key: The key to use for text extraction from items
             
         Returns:
             Deduplicated data
@@ -64,7 +65,7 @@ class SuffixArrayDedup(DeduplicationMethod):
         if not data:
             return []
             
-        self.logger.info(f"Running suffix array deduplication on {len(data)} items")
+        self.logger.info(f"Running suffix array deduplication on {len(data)} items with key: {key}")
         
         # Step 1: Preprocess texts and build item mapping
         texts = []
@@ -72,7 +73,7 @@ class SuffixArrayDedup(DeduplicationMethod):
         item_texts = {}
         
         for idx, item in enumerate(data):
-            text = self._extract_text(item)
+            text = self._extract_text(item, key)
             if text:
                 # Clean text
                 text = self._preprocess_text(text)
@@ -265,7 +266,7 @@ class SuffixArrayDedup(DeduplicationMethod):
         
         return result
     
-    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None) -> bool:
+    def _is_similar(self, item1: Dict[str, Any], item2: Dict[str, Any], threshold: Optional[float] = None, key: str = "conversation") -> bool:
         """
         Check if two items are similar based on common substrings.
         
@@ -273,12 +274,13 @@ class SuffixArrayDedup(DeduplicationMethod):
             item1: First item
             item2: Second item
             threshold: Optional threshold override
+            key: The key to use for text extraction from items
             
         Returns:
             True if items are similar, False otherwise
         """
-        text1 = self._extract_text(item1)
-        text2 = self._extract_text(item2)
+        text1 = self._extract_text(item1, key)
+        text2 = self._extract_text(item2, key)
         
         if not text1 or not text2:
             return False

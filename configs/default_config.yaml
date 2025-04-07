@@ -17,6 +17,26 @@ platform: # optional
   # (If not set, will try to identify automatically using heuristics)
   user_name: "you_store_name"
 
+
+data_processing:
+  # filter out sentences that contain these words
+  filter_words:
+    - "請稍候專員為您服務"
+    - "你正在回覆你粉絲專頁貼文"
+    - "請告訴我們該如何為你提供協助"
+    - ".com"
+    - ".tw"
+    - ".cn"
+    - ".hk"
+    - ".net"
+    - ".org"
+    - ".io"
+    - ".ai"
+  role_transfer: # if seen this sentence, then transfer the role to the user
+    assistant_to_user:  
+      - "回覆了 1 則"
+    user_to_assistant:
+
 cleaning:
   stopwords_enabled: true
   language_filter_enabled: true
