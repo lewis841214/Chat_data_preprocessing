@@ -58,7 +58,6 @@ class DefaultDataProcessor(BaseDataProcessor):
                 continue
                 
             filtered_messages.append(message)
-            
         # If no messages left after filtering, skip this conversation
         if not filtered_messages:
             return None

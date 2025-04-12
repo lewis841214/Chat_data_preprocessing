@@ -34,11 +34,12 @@ def apply_role_transfer(messages: List[Dict[str, Any]],
         # Apply role transfer if configured
         if role == "Assistant" and any(pattern in content for pattern in assistant_to_user):
             current_role = "User"
-        elif role == "User" and any(pattern in content for pattern in user_to_assistant):
-            current_role = "Assistant"
+        elif role == "User":
+            if  user_to_assistant != None:
+                if any(pattern in content for pattern in user_to_assistant):
+                    current_role = "Assistant"
         else:
             current_role = role
-            
         # Create new message with potentially updated role
         processed_message = message.copy()
         processed_message["role"] = current_role
